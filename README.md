@@ -16,28 +16,7 @@ The API routes never contain logic; they call a service in `backend/services/`
 and turn its result (or its `ApiError`) into JSON. `backend/` never imports
 anything from `frontend/`, so the two layers stay independent.
 
-## Setup
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor** and run the whole of `backend/schema.sql`. It creates the
-   tables and seeds four tariffs, six rooms and two frequent guests.
-3. Copy the credentials from **Project settings -> API** into `.env.local`:
-
-   ```
-   SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-   SUPABASE_SERVICE_KEY=<the service_role key>
-   ```
-
-   The `service_role` key is read on the server only and must never be shipped
-   to the browser.
-4. Install and run:
-
-   ```
-   npm install
-   npm run dev
-   ```
-
-   The app is at <http://localhost:3000>.
 
 ## The screens
 
