@@ -1,0 +1,440 @@
+/* ------------------------------------------------------------------
+   Minimal design system: one accent colour, flat surfaces, hairline
+   borders. No gradients anywhere - depth comes from borders and from
+   a single very soft shadow on raised surfaces.
+------------------------------------------------------------------ */
+
+:root {
+  --bg: #f4f4f2;
+  --surface: #ffffff;
+  --surface-sunken: #fafaf8;
+  --line: #e4e3df;
+  --line-strong: #d3d2cd;
+  --text: #17181a;
+  --text-soft: #5d5f63;
+  --text-faint: #8b8d91;
+  --accent: #1d5b47;
+  --accent-soft: #e9f1ee;
+  --danger: #9d3b31;
+  --danger-soft: #f8ece9;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(23, 24, 26, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131415;
+    --surface: #1b1c1e;
+    --surface-sunken: #202123;
+    --line: #2c2e30;
+    --line-strong: #3a3c3f;
+    --text: #f1f1ef;
+    --text-soft: #a9abaf;
+    --text-faint: #7e8085;
+    --accent: #6fbfa1;
+    --accent-soft: #1e2b27;
+    --danger: #e0857a;
+    --danger-soft: #2c2020;
+    --shadow: none;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- shell ---------- */
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.topbar .sub {
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.topbar .mark {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 28px 24px 72px;
+}
+
+/* ---------- tabs ---------- */
+
+nav.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 26px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+nav.tabs button {
+  flex: 1 0 auto;
+  border: 0;
+  background: none;
+  padding: 8px 14px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+nav.tabs button:hover {
+  color: var(--text);
+  background: var(--surface-sunken);
+}
+
+nav.tabs button[aria-current='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 550;
+}
+
+/* ---------- cards ---------- */
+
+section.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  padding: 16px 20px 20px;
+  overflow: hidden;
+}
+
+section.card h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+section.card .hint {
+  margin: 4px 0 0;
+  color: var(--text-faint);
+  font-size: 13px;
+  max-width: 68ch;
+}
+
+section.card > form,
+section.card > .bill,
+section.card > .stat {
+  margin-top: 16px;
+}
+
+/* Tables run to the card's edges; their cells carry the padding back. */
+section.card > .scroll {
+  margin: 16px -20px -20px;
+}
+
+section.card > .scroll:not(:last-child) {
+  margin-bottom: 0;
+}
+
+/* ---------- forms ---------- */
+
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 5px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
+input:hover,
+select:hover {
+  border-color: var(--text-faint);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input::placeholder {
+  color: var(--text-faint);
+}
+
+button.primary {
+  margin-top: 18px;
+  padding: 9px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+button.primary:hover {
+  filter: brightness(1.08);
+}
+
+button.primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
+}
+
+button.link {
+  margin-top: 18px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.link:hover {
+  border-color: var(--text-faint);
+}
+
+/* ---------- tables ---------- */
+
+.scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead th {
+  padding: 9px 20px;
+  background: var(--surface-sunken);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr:hover td {
+  background: var(--surface-sunken);
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- messages and badges ---------- */
+
+.note {
+  margin: 18px 0 0;
+  padding: 10px 13px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 14px;
+}
+
+.note.ok {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.note.bad {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-sunken);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.tag.free {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- statistics ---------- */
+
+.stat {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.stat > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+}
+
+.stat span {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.stat strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- bill ---------- */
+
+.bill {
+  font-size: 14px;
+}
+
+.bill .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.bill .row span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bill .row.sum {
+  color: var(--text-soft);
+}
+
+.bill .row.total {
+  margin-top: 4px;
+  padding-top: 13px;
+  border-bottom: 0;
+  border-top: 1px solid var(--line-strong);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty {
+  margin: 16px 0 0;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--text-faint);
+  font-size: 14px;
+  text-align: center;
+}
+
+@media print {
+  .topbar .mark,
+  nav.tabs,
+  button {
+    display: none;
+  }
+
+  section.card {
+    border: 0;
+    box-shadow: none;
+  }
+}
