@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, dateTime, money, shortDate } from '../api.js';
+import { api, dateTime, isInHouse, money, shortDate } from '../api.js';
 import { Card, Empty, Field, GuestPicker, Icon, Note } from './ui.jsx';
 
 export default function Checkout({ token: openToken }) {
@@ -12,7 +12,9 @@ export default function Checkout({ token: openToken }) {
   const [note, setNote] = useState(null);
 
   const loadLists = () => {
-    api('/reservations?status=booked').then(setGuests).catch(() => {});
+    api('/reservations?status=booked')
+      .then((rows) => setGuests(rows.filter((row) => isInHouse(row))))
+      .catch(() => {});
     api('/reservations?status=checked_out').then(setHistory).catch(() => {});
   };
 

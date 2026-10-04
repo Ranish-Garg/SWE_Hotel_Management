@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, dateTime, localDateTimeValue, money } from '../api.js';
+import { api, dateTime, isInHouse, localDateTimeValue, money } from '../api.js';
 import { Card, Empty, Field, GuestPicker, Note } from './ui.jsx';
 
 // Quick picks for the commonest orders; any item can still be typed in by hand.
@@ -35,8 +35,16 @@ export default function Catering({ token }) {
   const set = (patch) => setForm((current) => ({ ...current, ...patch }));
 
   useEffect(() => {
+    // Only guests staying right now can order food: not advance bookings, not past their stay.
     api('/reservations?status=booked')
-      .then(setGuests)
+      .then((rows) => {
+        const active = rows.filter((row) => isInHouse(row));
+        setGuests(active);
+        if (token && !active.some((row) => String(row.token_number) === String(token))) {
+          setForm((current) => ({ ...current, token_number: '' }));
+          setNote({ kind: 'error', text: `Token ${token} is not staying in the hotel right now.` });
+        }
+      })
       .catch((error) => setNote({ kind: 'error', text: error.message }));
   }, []);
 

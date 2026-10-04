@@ -238,9 +238,11 @@ export default function Reception({ go }) {
                     <td className="num">{money(reservation.advance_paid)}</td>
                     <td>
                       <div className="row-actions">
-                        <button className="mini" type="button" onClick={() => go('catering', reservation.token_number)}>
-                          Food
-                        </button>
+                        {isInHouse(reservation) ? (
+                          <button className="mini" type="button" onClick={() => go('catering', reservation.token_number)}>
+                            Food
+                          </button>
+                        ) : null}
                         <button className="mini" type="button" onClick={() => go('checkout', reservation.token_number)}>
                           Bill
                         </button>
