@@ -1,25 +1,51 @@
 'use client';
 
-import { useState } from 'react';
-import { api, dateTime, money } from '../api.js';
-import { Card, Field, Note } from './ui.jsx';
+import { useEffect, useState } from 'react';
+import { api, dateTime, money, shortDate } from '../api.js';
+import { Card, Empty, Field, GuestPicker, Icon, Note } from './ui.jsx';
 
-export default function Checkout() {
-  const [token, setToken] = useState('');
+export default function Checkout({ token: openToken }) {
+  const [guests, setGuests] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [token, setToken] = useState(openToken ? String(openToken) : '');
   const [bill, setBill] = useState(null);
   const [note, setNote] = useState(null);
+
+  const loadLists = () => {
+    api('/reservations?status=booked').then(setGuests).catch(() => {});
+    api('/reservations?status=checked_out').then(setHistory).catch(() => {});
+  };
 
   async function run(path, successNote) {
     setNote(null);
     try {
       const data = await api(path, { method: successNote ? 'POST' : 'GET' });
       setBill(data);
-      if (successNote) setNote({ kind: 'ok', text: successNote });
+      if (successNote) {
+        setNote({ kind: 'ok', text: successNote });
+        loadLists();
+      }
     } catch (error) {
       setBill(null);
       setNote({ kind: 'error', text: error.message });
     }
   }
+
+  const show = (value) => {
+    setToken(String(value));
+    run(`/bill/${value}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    loadLists();
+    if (openToken) run(`/bill/${openToken}`);
+  }, []);
+
+  const checkOut = () => {
+    if (!window.confirm(`Check out ${bill.guest_name} (token ${bill.token_number}) and close the bill?`)) return;
+    run(`/checkout/${bill.token_number}`, `Token ${bill.token_number} checked out. Room ${bill.room_number} is free.`);
+  };
 
   return (
     <>
@@ -31,7 +57,10 @@ export default function Checkout() {
           }}
         >
           <div className="grid">
-            <Field label="Guest token number">
+            <Field label="Guest in the hotel">
+              <GuestPicker guests={guests} value={token} required={false} onChange={(value) => value && show(value)} />
+            </Field>
+            <Field label="Or any token number">
               <input type="number" required value={token} onChange={(event) => setToken(event.target.value)} />
             </Field>
           </div>
@@ -43,8 +72,26 @@ export default function Checkout() {
       </Card>
 
       {bill ? (
-        <Card title={`Bill for token ${bill.token_number} - ${bill.guest_name}`}>
-          <div className="bill">
+        <Card
+          title={`Invoice · Token ${bill.token_number}`}
+          hint={bill.status === 'checked_out' ? 'Checked out - final bill.' : 'Guest still in the hotel - provisional bill up to the expected departure.'}
+          actions={
+            <button className="mini" type="button" onClick={() => window.print()}>
+              Print
+            </button>
+          }
+        >
+          <div className="bill" style={{ marginTop: 18 }}>
+            <div className="bill-head">
+              <div>
+                <strong>{bill.guest_name}</strong>
+                Room {bill.room_number}
+              </div>
+              <div>
+                <strong>{bill.nights} night(s)</strong>
+                {dateTime(bill.arrival_time)} &rarr; {dateTime(bill.departure_time)}
+              </div>
+            </div>
             <div className="row">
               <span>
                 Room {bill.room_number} &middot; {bill.nights} night(s) &times; {money(bill.rate_per_night)}
@@ -80,31 +127,61 @@ export default function Checkout() {
               <span>- {money(bill.advance_paid)}</span>
             </div>
             <div className="row total">
-              <span>Balance payable</span>
-              <span>{money(bill.balance_payable)}</span>
+              <span>{bill.balance_payable < 0 ? 'Refund due to guest' : 'Balance payable'}</span>
+              <span>{money(Math.abs(bill.balance_payable))}</span>
             </div>
           </div>
 
-          <p className="hint" style={{ marginTop: 16 }}>
-            Stay: {dateTime(bill.arrival_time)} to {dateTime(bill.departure_time)} &middot;{' '}
-            {bill.status === 'checked_out' ? 'already checked out' : 'still in the hotel'}
-          </p>
-
           {bill.status === 'checked_out' ? (
             <button className="link" type="button" onClick={() => window.print()}>
-              Print bill
+              <Icon name="print" /> Print bill
             </button>
           ) : (
-            <button
-              className="primary"
-              type="button"
-              onClick={() => run(`/checkout/${bill.token_number}`, `Token ${bill.token_number} checked out.`)}
-            >
-              Check out and close bill
+            <button className="primary" type="button" onClick={checkOut}>
+              <Icon name="depart" /> Check out and close bill
             </button>
           )}
         </Card>
       ) : null}
+
+      <Card title="Recent check-outs" hint="Guests who have already left. Open any of them to reprint the bill.">
+        {history.length === 0 ? (
+          <Empty>No guest has checked out yet.</Empty>
+        ) : (
+          <div className="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Guest</th>
+                  <th>Room</th>
+                  <th>Stayed</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {history.slice(0, 15).map((stay) => (
+                  <tr key={stay.token_number}>
+                    <td>#{stay.token_number}</td>
+                    <td>{stay.guest_name}</td>
+                    <td>{stay.rooms.room_number}</td>
+                    <td>
+                      {shortDate(stay.arrival_time)} &rarr; {shortDate(stay.checkout_time)}
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button className="mini" type="button" onClick={() => show(stay.token_number)}>
+                          View bill
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </>
   );
 }

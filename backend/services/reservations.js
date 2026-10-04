@@ -92,3 +92,26 @@ export async function reserveRoom(input) {
     message: `Room ${room.room_number} allotted. Token number ${reservation.token_number}.`,
   };
 }
+
+/**
+ * Cancel a booking that has not been used yet, freeing its room.
+ * A guest who has already been served food must be checked out instead,
+ * so no charge is ever lost.
+ */
+export async function cancelReservation(tokenNumber) {
+  const reservation = await getReservation(tokenNumber);
+  if (reservation.status === 'checked_out') {
+    throw new ApiError(400, `Token number ${tokenNumber} has already checked out`);
+  }
+
+  const { count } = await db
+    .from('food_orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('token_number', tokenNumber);
+  if (count) {
+    throw new ApiError(400, `Token number ${tokenNumber} has food on the bill; check the guest out instead`);
+  }
+
+  unwrap(await db.from('reservations').delete().eq('token_number', tokenNumber));
+  return { ...reservation, message: `Reservation ${tokenNumber} cancelled; room ${reservation.rooms.room_number} is free.` };
+}

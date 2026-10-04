@@ -25,3 +25,18 @@ export function localDateTimeValue(date = new Date()) {
 }
 
 export const currentMonth = () => new Date().toISOString().slice(0, 7);
+
+export const shortDate = (value) =>
+  value ? new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '-';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Expected departure of a booking that is still open. */
+export const expectedDeparture = (booking) =>
+  new Date(new Date(booking.arrival_time).getTime() + booking.duration_days * DAY_MS);
+
+/** Is the guest physically in the room at `now` (arrived and not yet due out)? */
+export const isInHouse = (booking, now = new Date()) =>
+  new Date(booking.arrival_time) <= now && now < expectedDeparture(booking);
+
+export const sameDay = (a, b = new Date()) => new Date(a).toDateString() === new Date(b).toDateString();

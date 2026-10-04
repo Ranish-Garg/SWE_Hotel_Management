@@ -20,6 +20,9 @@ anything from `frontend/`, so the two layers stay independent.
 
 ## The screens
 
+- **Overview** - the hotel at a glance: rooms, occupied and free right now,
+  today's arrivals and departures, a colour-coded room board, upcoming advance
+  bookings and a day-by-day occupancy chart for the month.
 - **Reception** - reserve a room in advance or on the spot. The receptionist
   enters the guest's name, arrival time, approximate stay, advance paid, the
   room type wanted and, if the guest has one, their frequent-guest identity
@@ -62,6 +65,8 @@ anything from `frontend/`, so the two layers stay independent.
 | `PATCH` | `/api/rates`             | Revise one category by a percentage         |
 | `GET`   | `/api/reservations`      | Reservations (`?status=booked\|checked_out`) |
 | `POST`  | `/api/reservations`      | Allot a room, or return an apology (409)    |
+| `GET`   | `/api/reservations/:token` | One reservation                           |
+| `DELETE`| `/api/reservations/:token` | Cancel a booking with no food on the bill |
 | `GET`   | `/api/food?token=`       | Food consumed by a guest                    |
 | `POST`  | `/api/food`              | Record a consumed item                      |
 | `GET`   | `/api/bill/:token`       | Bill as it stands                           |

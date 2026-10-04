@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, currentMonth, money, roomType } from '../api.js';
 import { Card, Empty, Field, Note, RoomTypeFields } from './ui.jsx';
+import OccupancyChart from './OccupancyChart.jsx';
 
 export default function Manager() {
   const [month, setMonth] = useState(currentMonth());
@@ -31,6 +32,13 @@ export default function Manager() {
     loadGuests();
     showOccupancy(currentMonth());
   }, []);
+
+  // What the selected category's tariff would become, shown before it is applied.
+  const selectedRate = rates.find((r) => r.bed_type === revision.bed_type && r.is_ac === revision.is_ac);
+  const preview =
+    selectedRate && revision.percent !== '' && !Number.isNaN(Number(revision.percent))
+      ? Math.round(selectedRate.rate * (1 + Number(revision.percent) / 100) * 100) / 100
+      : null;
 
   async function revise(event) {
     event.preventDefault();
@@ -105,26 +113,23 @@ export default function Manager() {
             </div>
           </div>
         ) : null}
+        {occupancy ? <OccupancyChart daily={occupancy.daily} /> : null}
       </Card>
 
       <Card title="Room tariff" hint="Revise a category upwards with a positive percentage, downwards with a negative one.">
-        <div className="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th className="num">Tariff / night</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rates.map((rate) => (
-                <tr key={`${rate.bed_type}-${rate.is_ac}`}>
-                  <td>{roomType(rate.bed_type, rate.is_ac)}</td>
-                  <td className="num">{money(rate.rate)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="tariffs">
+          {rates.map((rate) => {
+            const selected = rate.bed_type === revision.bed_type && rate.is_ac === revision.is_ac;
+            return (
+              <div key={`${rate.bed_type}-${rate.is_ac}`} style={selected ? { borderColor: 'var(--accent)' } : null}>
+                <span>{roomType(rate.bed_type, rate.is_ac)}</span>
+                <strong>{money(rate.rate)}</strong>
+                <small>
+                  {selected && preview ? `after revision: ${money(preview)}` : 'per night'}
+                </small>
+              </div>
+            );
+          })}
         </div>
 
         <form onSubmit={revise} style={{ marginTop: 16 }}>

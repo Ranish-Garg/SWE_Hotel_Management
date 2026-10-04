@@ -1,30 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, dateTime, localDateTimeValue, money } from '../api.js';
-import { Card, Empty, Field, Note } from './ui.jsx';
+import { Card, Empty, Field, GuestPicker, Note } from './ui.jsx';
 
-const emptyForm = () => ({
-  token_number: '',
+// Quick picks for the commonest orders; any item can still be typed in by hand.
+const MENU = [
+  { name: 'Breakfast buffet', price: 650 },
+  { name: 'Masala tea', price: 120 },
+  { name: 'Filter coffee', price: 150 },
+  { name: 'Club sandwich', price: 420 },
+  { name: 'Paneer tikka', price: 480 },
+  { name: 'Veg thali', price: 550 },
+  { name: 'Butter chicken', price: 690 },
+  { name: 'Biryani', price: 620 },
+  { name: 'Fresh lime soda', price: 180 },
+  { name: 'Dessert platter', price: 380 },
+];
+
+const emptyForm = (token_number = '') => ({
+  token_number,
   item_name: '',
   quantity: 1,
   unit_price: '',
   consumed_at: localDateTimeValue(),
 });
 
-export default function Catering() {
-  const [form, setForm] = useState(emptyForm);
+export default function Catering({ token }) {
+  const [guests, setGuests] = useState([]);
+  const [form, setForm] = useState(() => emptyForm(token ? String(token) : ''));
   const [orders, setOrders] = useState([]);
-  const [shownToken, setShownToken] = useState(null);
   const [note, setNote] = useState(null);
 
   const set = (patch) => setForm((current) => ({ ...current, ...patch }));
 
-  async function showOrders(token) {
-    const rows = await api(`/food?token=${token}`);
-    setOrders(rows);
-    setShownToken(token);
-  }
+  useEffect(() => {
+    api('/reservations?status=booked')
+      .then(setGuests)
+      .catch((error) => setNote({ kind: 'error', text: error.message }));
+  }, []);
+
+  // Whenever a guest is chosen, show what they have had so far.
+  useEffect(() => {
+    if (!form.token_number) {
+      setOrders([]);
+      return;
+    }
+    api(`/food?token=${form.token_number}`).then(setOrders).catch(() => setOrders([]));
+  }, [form.token_number]);
 
   async function submit(event) {
     event.preventDefault();
@@ -40,26 +63,25 @@ export default function Catering() {
           consumed_at: new Date(form.consumed_at).toISOString(),
         },
       });
-      setNote({ kind: 'ok', text: `${form.item_name} recorded against token ${form.token_number}.` });
-      await showOrders(form.token_number);
-      setForm({ ...emptyForm(), token_number: form.token_number });
+      setNote({ kind: 'ok', text: `${form.quantity} × ${form.item_name} recorded against token ${form.token_number}.` });
+      setOrders(await api(`/food?token=${form.token_number}`));
+      setForm(emptyForm(form.token_number));
     } catch (error) {
       setNote({ kind: 'error', text: error.message });
     }
   }
+
+  const guest = guests.find((g) => String(g.token_number) === String(form.token_number));
+  const foodTotal = orders.reduce((sum, order) => sum + order.quantity * order.unit_price, 0);
+  const lineTotal = (Number(form.quantity) || 0) * (Number(form.unit_price) || 0);
 
   return (
     <>
       <Card title="Record food consumed" hint="Entered by the catering manager as and when a guest consumes an item.">
         <form onSubmit={submit}>
           <div className="grid">
-            <Field label="Guest token number">
-              <input
-                type="number"
-                required
-                value={form.token_number}
-                onChange={(event) => set({ token_number: event.target.value })}
-              />
+            <Field label="Guest">
+              <GuestPicker guests={guests} value={form.token_number} onChange={(value) => set({ token_number: value })} />
             </Field>
             <Field label="Food item">
               <input required value={form.item_name} onChange={(event) => set({ item_name: event.target.value })} />
@@ -92,15 +114,35 @@ export default function Catering() {
               />
             </Field>
           </div>
-          <button className="primary" type="submit">
-            Record item
-          </button>
+
+          <label style={{ marginTop: 18 }}>Quick menu</label>
+          <div className="menu" style={{ marginTop: 0 }}>
+            {MENU.map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => set({ item_name: item.name, unit_price: item.price })}
+              >
+                <strong>{item.name}</strong>
+                <span>{money(item.price)}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="actions">
+            <button className="primary" type="submit">
+              Record item{lineTotal ? ` · ${money(lineTotal)}` : ''}
+            </button>
+          </div>
           <Note note={note} />
         </form>
       </Card>
 
-      {shownToken ? (
-        <Card title={`Items consumed by token ${shownToken}`}>
+      {guest ? (
+        <Card
+          title={`${guest.guest_name}'s orders`}
+          hint={`Token ${guest.token_number} · Room ${guest.rooms.room_number} · Food so far ${money(foodTotal)}`}
+        >
           {orders.length === 0 ? (
             <Empty>Nothing recorded yet.</Empty>
           ) : (
